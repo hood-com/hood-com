@@ -1,3 +1,11 @@
+<script>
+const ADMIN_PASSWORD = "hoodabonajmalamary";
+const entered = prompt("🔒 أدخل كلمة سر لوحة التحكم:");
+if(entered !== ADMIN_PASSWORD){
+  document.body.innerHTML = "<div style='text-align:center;padding:50px;font-family:Tajawal;background:#000;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column'><h1 style='color:#FF3D57;font-size:30px'>🚫 الوصول مرفوض</h1><p>كلمة السر غير صحيحة</p></div>";
+  throw new Error("Access denied");
+}
+</script>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
