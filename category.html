@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>القسم - هود كوم</title>
+  <link rel="icon" type="image/png" href="logo-transparent.png">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- التنبيه -->
+<div class="toast" id="toast">
+  <span class="toast-icon" data-icon="check" data-size="18"></span>
+  <span id="toastText"></span>
+</div>
+
+<!-- نافذة العروض -->
+<div class="item-modal-overlay" id="itemModalOverlay" onclick="closeItemModal()"></div>
+<div class="item-modal" id="itemModal">
+  <div class="modal-header">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeItemModal()" data-icon="close" data-size="18"></button>
+    <div id="modalImageWrap"></div>
+    <h2 class="modal-name" id="modalName"></h2>
+    <p class="modal-desc" id="modalDesc"></p>
+  </div>
+  <div class="modal-body">
+    <div class="modal-offers-title">اختر العرض المناسب لك</div>
+    <div id="modalOffers"></div>
+  </div>
+</div>
+
+<!-- نافذة بيانات العميل (الشراء المباشر) -->
+<div class="customer-overlay" id="customerOverlay" onclick="closeCustomerModal()"></div>
+<div class="customer-modal" id="customerModal">
+  <div class="customer-header">
+    <div class="modal-handle"></div>
+    <h2>إتمام الشراء</h2>
+    <p>أدخل بياناتك واختر المحفظة لإرسال الطلب عبر واتساب</p>
+  </div>
+
+  <!-- إشعار معلومات الواتساب -->
+  <div class="customer-notice">
+    <div class="customer-notice-icon" data-icon="info" data-size="18"></div>
+    <div class="customer-notice-content">
+      <strong>💬 ملاحظة هامة:</strong>
+      جميع البيانات التي تدخلها هنا <u>تُرسل فقط إلى الواتساب</u> مع طلبك، وهي مخصصة <u>لسرعة التواصل وتسهيل الشراء</u>. لا يتم تخزينها أو مشاركتها مع أي طرف آخر.
+    </div>
+  </div>
+
+  <!-- قسم الزبون المتكرر -->
+  <div class="returning-customer" id="returningCustomerBox" style="display:none;">
+    <!-- يتم ملؤه ديناميكياً -->
+  </div>
+
+  <form class="customer-body" onsubmit="sendOrderToWhatsApp(event)">
+    <!-- تفاصيل الطلب -->
+    <div class="order-details-card" id="orderDetailsCard"></div>
+
+    <!-- الحقول الديناميكية الخاصة بالمنتج -->
+    <div class="dynamic-fields-container" id="dynamicFieldsContainer" style="display:none;">
+      <!-- يتم ملؤه ديناميكياً حسب المنتج -->
+    </div>
+
+    <!-- جميع الحقول اختيارية -->
+    <div class="form-group">
+      <label class="form-label">
+        <span data-icon="user" data-size="16"></span>
+        الاسم
+        <span class="optional">(اختياري)</span>
+      </label>
+      <input type="text" class="form-input" id="custName" placeholder="مثال: محمد">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <span data-icon="phone" data-size="16"></span>
+        رقم الهاتف
+        <span class="optional">(اختياري)</span>
+      </label>
+      <input type="tel" class="form-input" id="custPhone" placeholder="7XXXXXXXX">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <span data-icon="map" data-size="16"></span>
+        المحافظة
+        <span class="optional">(اختياري)</span>
+      </label>
+      <input type="text" class="form-input" id="custGov" placeholder="صنعاء، عدن، تعز...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <span data-icon="location" data-size="16"></span>
+        المدينة / المنطقة
+        <span class="optional">(اختياري)</span>
+      </label>
+      <input type="text" class="form-input" id="custCity" placeholder="الحصبة، كريتر...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        <span data-icon="home" data-size="16"></span>
+        العنوان
+        <span class="optional">(اختياري)</span>
+      </label>
+      <input type="text" class="form-input" id="custAddress" placeholder="تفاصيل إضافية">
+    </div>
+
+    <!-- قسم المحافظ الإلكترونية -->
+    <div class="wallet-section-title">
+      <span data-icon="wallet" data-size="18"></span>
+      اختر المحفظة
+    </div>
+    <p class="wallet-section-desc">اختر المحفظة التي تريد الدفع منها، سيتم إرسال تفاصيل الطلب إلى الواتساب</p>
+
+    <div class="wallet-grid" id="walletGrid"></div>
+    <input type="hidden" id="custWallet" value="">
+
+    <!-- معلومات حساب المحفظة -->
+    <div class="wallet-account-info" id="walletAccountInfo" style="display:none;">
+      <div class="wallet-account-info-icon" data-icon="creditCard" data-size="20"></div>
+      <div class="wallet-account-info-content">
+        <div class="wallet-account-info-label">رقم الحساب للتحويل</div>
+        <div class="wallet-account-number" id="walletAccountNumber"></div>
+      </div>
+    </div>
+
+    <div style="margin-top: 18px;">
+      <div class="order-summary">
+        <span class="order-summary-label">إجمالي الطلب</span>
+        <span class="order-summary-price" id="modalTotal"></span>
+      </div>
+      <button type="submit" class="btn btn-whatsapp btn-full">
+        <span data-icon="send" data-size="18"></span>
+        إرسال الطلب عبر واتساب
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- غطاء القائمة -->
+<div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
+
+<!-- القائمة الجانبية -->
+<div class="menu-drawer" id="menuDrawer">
+  <div class="menu-header">
+    <img src="logo-transparent.png" alt="هود كوم" class="logo-img">
+    <button class="menu-close" onclick="closeMobileMenu()" data-icon="close" data-size="18"></button>
+  </div>
+  <div class="menu-body">
+    <a href="index.html" class="menu-link">
+      <div class="menu-link-icon" data-icon="home" data-size="18"></div>
+      الرئيسية
+    </a>
+
+    <div class="menu-section-title">الأقسام</div>
+    <div id="menuCategories"></div>
+
+    <div class="menu-divider"></div>
+
+    <div class="menu-section-title">تواصل معنا</div>
+
+    <a href="tel:+967712423773" class="menu-link" id="menuSupportLink">
+      <div class="menu-link-icon" data-icon="support" data-size="18"></div>
+      <div style="flex:1;">
+        <div style="font-size:13px;">خدمة العملاء</div>
+        <div class="support-phone-text" style="font-size:11px; color:#888; direction:ltr; text-align:right;">+967 712 423 773</div>
+      </div>
+    </a>
+
+    <a href="tel:+967783708724" class="menu-link" id="menuAdminLink">
+      <div class="menu-link-icon" data-icon="phone" data-size="18"></div>
+      <div style="flex:1;">
+        <div style="font-size:13px;">الإدارة العامة</div>
+        <div class="admin-phone-text" style="font-size:11px; color:#888; direction:ltr; text-align:right;">+967 783 708 724</div>
+      </div>
+    </a>
+
+    <a href="https://whatsapp.com/channel/0029Vb8al5Y0LKZA4hbrLE19" target="_blank" class="menu-link" id="menuChannelLink">
+      <div class="menu-link-icon" data-icon="broadcast" data-size="18"></div>
+      <div style="flex:1;">
+        <div style="font-size:13px;">قناة الواتساب</div>
+        <div style="font-size:11px; color:#888;">القناة الرسمية</div>
+      </div>
+    </a>
+
+    <div class="menu-divider"></div>
+
+    <a href="admin.html" class="menu-link" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);">
+      <div class="menu-link-icon" data-icon="crown" data-size="18" style="background: linear-gradient(135deg, #FFD700, #C5A028); color: #000;"></div>
+      <span style="color:#FFD700; font-weight:800;">لوحة التحكم</span>
+    </a>
+  </div>
+</div>
+
+<!-- النافبار - بدون سلة -->
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="logo-link">
+    <img src="logo-transparent.png" alt="هود كوم" class="logo-img">
+  </a>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="openMobileMenu()" data-icon="menu" data-size="22"></button>
+  </div>
+</nav>
+
+<!-- مسار التنقل -->
+<div class="breadcrumb">
+  <a href="index.html">
+    <span data-icon="home" data-size="12"></span> الرئيسية
+  </a>
+  <span>←</span>
+  <a href="index.html#categories">الأقسام</a>
+  <span>←</span>
+  <span class="current" id="breadcrumbCurrent">القسم</span>
+</div>
+
+<!-- محتوى الصفحة -->
+<div id="pageContent">
+  <div style="padding:80px 20px; text-align:center;">
+    <div style="display:inline-block; width:50px; height:50px; border:4px solid #FFD700; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
+    <h2 style="margin:16px 0 8px; color:#FFD700;">جاري التحميل...</h2>
+    <p style="color:#888;">يرجى الانتظار</p>
+  </div>
+</div>
+
+<!-- الفوتر -->
+<footer class="site-footer">
+  <div class="footer-brand">
+    <div class="footer-logo-wrap">
+      <img src="logo-transparent.png" alt="هود كوم" class="footer-logo">
+    </div>
+    <p>متجرك الرقمي الأول في اليمن</p>
+
+    <div class="footer-contact">
+      <a href="tel:+967712423773" class="footer-support-link">
+        <span data-icon="support" data-size="14"></span>
+        <span>خدمة العملاء: <span class="support-phone-text">+967 712 423 773</span></span>
+      </a>
+      <a href="tel:+967783708724" class="footer-admin-link">
+        <span data-icon="phone" data-size="14"></span>
+        <span>الإدارة: <span class="admin-phone-text">+967 783 708 724</span></span>
+      </a>
+      <a href="https://whatsapp.com/channel/0029Vb8al5Y0LKZA4hbrLE19" target="_blank" class="footer-channel-link">
+        <span data-icon="broadcast" data-size="14"></span>
+        <span>قناة الواتساب الرسمية</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2024 <span class="gold">هود كوم</span> — جميع الحقوق محفوظة</p>
+  </div>
+</footer>
+
+<!-- زر واتساب عائم -->
+<a href="https://wa.me/967712423773" class="floating-whatsapp floating-wa-link" target="_blank" data-icon="whatsapp" data-size="28"></a>
+
+<!-- زر العودة للأعلى -->
+<button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" data-icon="arrowUp" data-size="20"></button>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+  // عرض الأيقونات فوراً
+  injectIcons();
+  applySiteSettingsToUI();
+
+  // متابعة الجاهزية
+  let categoryAttempts = 0;
+  const checkInterval = setInterval(function(){
+    categoryAttempts++;
+
+    if(typeof firebaseReady !== 'undefined' && firebaseReady){
+      console.log('Firebase جاهز - المحاولة:', categoryAttempts);
+      renderCategoryPage();
+      renderMenuCategories();
+      renderWalletGrid();
+      injectIcons();
+      applySiteSettingsToUI();
+      clearInterval(checkInterval);
+    }
+
+    if(categoryAttempts > 30){
+      console.log('انتهت محاولات الانتظار');
+      renderCategoryPage();
+      renderMenuCategories();
+      renderWalletGrid();
+      injectIcons();
+      applySiteSettingsToUI();
+      clearInterval(checkInterval);
+    }
+  }, 500);
+</script>
+
+</body>
+</html>
